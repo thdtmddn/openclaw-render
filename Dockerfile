@@ -4,9 +4,13 @@
 FROM ghcr.io/openclaw/openclaw:2026.11.3
 
 USER root
-COPY render-proxy.mjs start.sh /app/
-RUN chmod 755 /app/start.sh /app/render-proxy.mjs \
-  && chown node:node /app/start.sh /app/render-proxy.mjs
+# Render dockerCommand replaces ENTRYPOINT, so the official CLI path itself
+# must start the public proxy. Keep the original CLI next to the wrapper.
+COPY render-proxy.mjs openclaw-wrapper.mjs start.sh /app/
+RUN mv /app/openclaw.mjs /app/openclaw.official.mjs \
+  && mv /app/openclaw-wrapper.mjs /app/openclaw.mjs \
+  && chmod 755 /app/start.sh /app/render-proxy.mjs /app/openclaw.mjs /app/openclaw.official.mjs \
+  && chown node:node /app/start.sh /app/render-proxy.mjs /app/openclaw.mjs /app/openclaw.official.mjs
 USER node
 
 # Keep the Node heap inside the 512 MB free-plan limit (leave room for the OS and proxy).
@@ -23,8 +27,6 @@ EXPOSE 8080
 # by the image's non-root `node` user. State uses the image defaults under
 # /home/node and is discarded on every deploy, restart, and free-plan spin-down.
 
-# ENTRYPOINT starts the public proxy immediately (so Render's port scan
-# succeeds), then the official entrypoint and gateway.
 # --allow-unconfigured lets a fresh instance start before the user finishes onboarding.
-ENTRYPOINT ["/app/start.sh"]
+ENTRYPOINT ["tini", "-s", "--", "node", "/app/docker-entrypoint.mjs"]
 CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured"]

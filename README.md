@@ -10,7 +10,8 @@ Render's free plan has 512 MB RAM and cannot attach a persistent disk. The upstr
 
 ## How it runs
 
-- `render-proxy.mjs` listens on `0.0.0.0:8080` (`PORT`) as soon as the container starts.
+- Render starts `node openclaw.mjs gateway --allow-unconfigured`. The script at `/app/openclaw.mjs` is a small wrapper that starts `render-proxy.mjs`, then loads the official CLI.
+- `render-proxy.mjs` listens on `0.0.0.0:8080` (`PORT`) immediately so Render's port scan succeeds.
 - The official OpenClaw gateway listens on `127.0.0.1:18789` (`OPENCLAW_GATEWAY_PORT`).
 - Until the gateway is ready, the proxy returns HTTP 503.
 
