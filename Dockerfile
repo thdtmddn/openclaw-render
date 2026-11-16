@@ -3,11 +3,18 @@
 # Pin a stable release; bump the tag to update.
 FROM ghcr.io/openclaw/openclaw:2026.11.3
 
-# Keep the Node heap inside the 512 MB free-plan limit (leave room for the OS).
+USER root
+COPY render-proxy.mjs start.sh /app/
+RUN chmod 755 /app/start.sh /app/render-proxy.mjs \
+  && chown node:node /app/start.sh /app/render-proxy.mjs
+USER node
+
+# Keep the Node heap inside the 512 MB free-plan limit (leave room for the OS and proxy).
 ENV NODE_OPTIONS="--max-old-space-size=256"
 
-# Official gateway port. PORT must match so Render routes public HTTP traffic here.
-ENV OPENCLAW_GATEWAY_PORT=8080
+# Public HTTP port for Render. The gateway itself listens on loopback:18789
+# and is reached through the tiny proxy in render-proxy.mjs.
+ENV OPENCLAW_GATEWAY_PORT=18789
 ENV PORT=8080
 EXPOSE 8080
 
@@ -16,6 +23,8 @@ EXPOSE 8080
 # by the image's non-root `node` user. State uses the image defaults under
 # /home/node and is discarded on every deploy, restart, and free-plan spin-down.
 
+# ENTRYPOINT starts the public proxy immediately (so Render's port scan
+# succeeds), then the official entrypoint and gateway.
 # --allow-unconfigured lets a fresh instance start before the user finishes onboarding.
-# The base image ENTRYPOINT (tini + docker-entrypoint.mjs) is preserved.
+ENTRYPOINT ["/app/start.sh"]
 CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured"]

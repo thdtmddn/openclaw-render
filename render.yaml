@@ -1,6 +1,10 @@
 # Install-only OpenClaw on Render's free plan.
 # No persistent disk: free instances cannot attach disks, so state resets
 # on every deploy, restart, and idle spin-down.
+#
+# A tiny proxy binds 0.0.0.0:$PORT immediately so Render's port scan
+# succeeds while the official gateway (which is slow on 512 MB) starts
+# on loopback.
 services:
   - type: web
     name: openclaw
@@ -11,7 +15,7 @@ services:
     healthCheckPath: /startupz
     envVars:
       - key: OPENCLAW_GATEWAY_PORT
-        value: "8080"
+        value: "18789"
       - key: PORT
         value: "8080"
       - key: NODE_OPTIONS
