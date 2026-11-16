@@ -1,0 +1,6 @@
+.DS_Store
+.env
+.env.*
+gateway-token.txt
+*.pem
+*.key

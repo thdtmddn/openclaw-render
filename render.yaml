@@ -1,0 +1,20 @@
+# Install-only OpenClaw on Render's free plan.
+# No persistent disk: free instances cannot attach disks, so state resets
+# on every deploy, restart, and idle spin-down.
+services:
+  - type: web
+    name: openclaw
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerCommand: node openclaw.mjs gateway --allow-unconfigured
+    healthCheckPath: /startupz
+    envVars:
+      - key: OPENCLAW_GATEWAY_PORT
+        value: "8080"
+      - key: PORT
+        value: "8080"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=256"
+      - key: OPENCLAW_GATEWAY_TOKEN
+        generateValue: true
