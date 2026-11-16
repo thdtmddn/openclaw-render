@@ -22,16 +22,14 @@ function writeFreshConfig() {
   if (fs.existsSync(configPath)) return;
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   const origin = publicOrigin();
-  const controlUi = { allowInsecureAuth: true };
-  if (origin) controlUi.allowedOrigins = [origin];
-  const config = {
-    gateway: {
-      mode: "local",
-      bind: "loopback",
-      port: Number(gatewayPort),
-      controlUi,
-    },
+  const gateway = {
+    mode: "local",
+    bind: "loopback",
+    port: Number(gatewayPort),
   };
+  // allowInsecureAuth is rejected by OpenClaw 2026.11.3 as an unrecognized key.
+  if (origin) gateway.controlUi = { allowedOrigins: [origin] };
+  const config = { gateway };
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
   console.log(
     `[start] wrote ${configPath}${origin ? ` with allowedOrigins ${origin}` : " without a public origin"}`,
